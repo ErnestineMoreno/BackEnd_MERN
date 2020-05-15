@@ -1,16 +1,35 @@
-/// Require the Job model
+const User = require('../models/User')
 const Job = require('../models/Job')
-// Require the data
 const seedData = require('./seeds.json')
 
-// Delete any existing documents in the jobs collection
+const getUser = async () => {
+  try {
+    if (!process.argv[2]) {
+      throw new Error(
+        'To seed the database provide an email address for an existing user'
+      )
+    }
+    const user = await User.findOne({ email: process.argv[2] })
+    if (!user) {
+      throw new Error('No matching user found!')
+    }
+    return user
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 Job.deleteMany()
-// Use insertMany and pass it the seed data
-  .then(() => Job.insertMany(seedData))
-// Log the successful results
+  .then(getUser)
+  .then((user) => {
+    const seedDataWithOwner = seedData.map((job) => {
+      job.owner = user._id
+      return job
+    })
+    return Job.insertMany(seedDataWithOwner)
+  })
   .then(console.log)
-// Log any errors if things didn't work
-  .catch(console.error)
-// Use finally, so that this code will run whether or not
-// things worked and close our connection to the database.
-  .finally(process.exit)
+  .then(console.error)
+  .finally(() => {
+    process.exit()
+  })
