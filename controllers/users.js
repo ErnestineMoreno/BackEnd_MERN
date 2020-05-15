@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const { createUserToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -24,6 +25,15 @@ router.post('/signup', async (req, res, next) => {
 
 // SIGN IN
 // POST /api/signin
-router.post('/signin', (req, res, next) => {});
+router.post('/signin', (req, res, next) => {
+	User.findOne({ email: req.body.email })
+		// Pass the user and the request to createUserToken
+		.then((user) => createUserToken(req, user))
+		// createUserToken will either throw an error that
+		// will be caught by our error handler or send back
+		// a token that we'll in turn send to the client.
+		.then((token) => res.json({ token }))
+		.catch(next);
+});
 
 module.exports = router;
