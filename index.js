@@ -4,6 +4,9 @@ const cors = require('cors')
 const jobController = require('./controllers/jobs')
 
 // Instantiate express application object
+
+const { handleErrors, handleValidationErrors } = require('./middleware/custom_errors')
+
 const app = express()
 
 // The `.use` method sets up middleware in Express
@@ -25,19 +28,16 @@ app.use(express.urlencoded({ extended: true }))
 app.use('/api/jobs', jobController)
 
 // The last middleware receives any error as its first argument
-app.use((err, req, res, next) => {
-  // If the error contains a statusCode, set the variable to that code
-  // if not, set it to a default 500 code
-  const statusCode = err.statusCode || 500
-  // If the error contains a message, set the variable to that message
-  // if not, set it to a generic 'Internal Server Error'
-  const message = err.message || 'Internal Server Error'
-  // Set the status and send the message as a response to the client
-  res.status(statusCode).send(message)
-})
+// Require the error handlers
 
+app.use(handleErrors)
+
+app.use(handleValidationErrors)
 // Define a port for API to run on, if the environment
 // variable called `PORT` is not found use port 4000
+
+app.use(handleErrors)
+
 app.set('port', process.env.PORT || 4000)
 // Run server on designated port
 app.listen(app.get('port'), () => {
